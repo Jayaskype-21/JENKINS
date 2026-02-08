@@ -1,0 +1,222 @@
+//SCRIPTED PIPELINE
+node{
+    stage('Build'){
+        sh "date"
+    }
+    stage('Dev'){
+        echo "Hello Developer"
+    }
+    stage('Test'){
+        sh "uptime"
+    }
+}
+
+//DECLARATIVE PIPELINE
+pipeline {
+    agent any
+    stages{
+        stage("Build"){
+            steps{
+            echo "this is build command"
+            }
+        }
+        stage("Dev"){
+            steps{
+            echo "this is dev command"
+            }
+        }
+        stage("Test"){
+            steps{
+            echo "this is test command"
+            }
+        }
+    }
+}
+
+//DECLARATIVE PIPELINE CONCEPTS
+//1.ERROR HANDLING 
+//single stage
+pipeline {
+    agent any
+    stages{
+        stage("Build"){
+            steps{
+                echo "this is build command"
+            }
+        }
+    }
+    post {
+        always {
+            echo 'this is always run'
+        }
+        success {
+            echo "this is success"
+        }
+        failure {
+            echo "this is failure"
+        }
+    }
+}
+
+//multiple stage
+pipeline {
+    agent any
+    stages{
+        stage("Build"){
+            steps{
+                echo "this is build command"
+            }
+        }
+        stage("Dev"){
+            steps{
+                catchError(stageResult: 'FAILURE') {
+                    sh '/bin/false'
+                }
+            }
+        }
+        stage("Test"){
+            steps{
+            echo "this is test command"
+            }
+        }
+    }
+    post {
+        always {
+            echo 'this is always run'
+        }
+        success {
+            echo "this is success"
+        }
+        failure {
+            echo "this is failure"
+        }
+    }
+}
+
+//2.ENVIRONMENT VARIABLES
+pipeline {
+    agent any
+    environment {
+        NAME = "Jayasree"
+        LOCATION = "Taminadu"
+        DOMAIN = "Cloud Computing"
+    }
+    stages {
+        stage("details") {
+            steps {
+                echo "I am ${env.NAME} and my location is ${env.LOCATION}.I am working trainee in ${env.DOMAIN} domain"
+            }
+        }
+    }
+}
+                
+    
+//environment VARIABLES
+pipeline {
+    agent any
+    environment {
+        NAME = "Jayasree"
+        LOCATION = "Taminadu"
+        DOMAIN = "Cloud Computing"
+    }
+    stages {
+        stage("details") {
+            steps {
+                echo "my project number is  ${env.BUILD_NUMBER} and my job name is ${env.JOB_NAME}.I am working trainee in ${env.DOMAIN} domain"
+            }
+        }
+    }
+}
+
+
+
+
+3.//parameterized trigger
+pipeline {
+    agent any 
+    
+    parameters {
+        string(
+            name: 'ENVIRONMENT',
+            defaultValue: 'deV',
+            description: 'A simple string parameter'
+        )
+        choice(
+            name: 'RELEASE_VERSION',
+            choices: ['option1', 'option2', 'option3'],
+            description: 'A choice parameter'
+        )
+    }
+    
+    stages {
+        stage('Build') {
+            steps {
+                script {
+                     // Access parameters using params.PARAMETER_NAME syntax
+                    echo "The string parameter value is: ${params.ENVIRONMENT}"
+                    echo "The choice parameter value is: ${params.RELEASE_VERSION}"
+                }
+            }
+        }
+    }
+}
+
+
+
+
+//credentails(with credentails)
+pipeline {
+    agent any
+    stages{
+        stage("Build"){
+            steps{
+                withCredentials([usernamePassword(credentialsId: 'jayacredentails', passwordVariable: 'p', usernameVariable: 'u')]) {
+                    echo "Username is: ${u}"
+                     // Or pass them to another command, such as a shell script:
+                    sh "curl -u $u:$p https://example.com/api/data"
+                     // Note: The variable values are only available inside this block
+                }
+            }
+        }
+    }
+}
+OUTPUT:
+ Print Message -- Username is: jayasree (self time 19ms)
+ Shell Script -- curl -u jayasree:${p} https://example.com/api/data (self time 285ms)
+Warning: A secret was passed to "sh" using Groovy String interpolation, which is insecure.
+		 Affected argument(s) used the following variable(s): [p]
+		 See https://jenkins.io/redirect/groovy-string-interpolation for details.
++ curl -u jayasree:**** https://example.com/api/data
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
+100   513    0   513    0     0   7922      0 --:--:-- --:--:-- --:--:--  7892
+<!doctype html><html lang="en"><head><title>Example Domain</title><meta name="viewport" content="width=device-width, initial-scale=1"><style>body{background:#eee;width:60vw;margin:15vh auto;font-family:system-ui,sans-serif}h1{font-size:1.5em}div{opacity:0.8}a:link,a:visited{color:#348}</style><body><div><h1>Example Domain</h1><p>This domain is for use in documentation examples without needing permission. Avoid use in operations.<p><a href="https://iana.org/domains/example">Learn more</a></div></body></html>
+              
+
+//jobs running in parallel
+pipeline {
+    agent any
+    stages{
+        stage("Build"){
+            steps{
+                script{
+                    for(int i=1;i<=10;i++){
+                        echo "Hello"
+                    }
+                }
+            }
+        }
+        stage("Test"){
+            steps{
+                script{
+                    for(int i=1;i<=10;i++){
+                        echo "I am jayasree"
+                    }
+                }
+            }
+        }
+    }
+}
